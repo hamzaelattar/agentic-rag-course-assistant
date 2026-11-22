@@ -1,11 +1,12 @@
 
-from app.ingestion.pdf_loader import load_pdf
-from app.ingestion.chunking import create_chunks
-from app.retrieval.embeddings import QwenEmbeddings
-from app.retrieval.neo4j_store import Neo4jGraph
-
-
 def main():
+    print("Démarrage du test GraphRAG...", flush=True)
+
+    from app.ingestion.pdf_loader import load_pdf
+    from app.ingestion.chunking import create_chunks
+    from app.retrieval.embeddings import QwenEmbeddings
+    from app.retrieval.neo4j_store import Neo4jGraph
+
     # 1. Charger le cours
     pages = load_pdf("data/cours_transformers.pdf")
     chunks = create_chunks(pages)
