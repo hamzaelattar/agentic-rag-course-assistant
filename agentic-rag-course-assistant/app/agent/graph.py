@@ -1,5 +1,6 @@
 
 import gc
+import re
 import torch
 
 from langgraph.graph import StateGraph, START, END
@@ -181,6 +182,38 @@ def planner_node(state: AgentState) -> dict:
             "remaining_tools": [],
             "route": "direct",
             "tool_results": {}
+        }
+
+    # Les scores A/B du petit modèle ne sont pas bien calibrés :
+    # il peut déclarer nécessaires des outils sans rapport. Les intentions
+    # explicites déterminent donc les outils, avec le RAG par défaut pour
+    # une question de cours.
+    normalized = question.casefold()
+    selected = []
+
+    if re.search(r"\b(page\s*\d+|p\.\s*\d+|consulte la page|lis la page)\b", normalized):
+        selected.append("document_lookup")
+
+    if re.search(r"\b(internet|web|en ligne|actualit[eé]s?|nouveaut[eé]s?|r[eé]cent(?:e|es|s)?|recherche sur)\b", normalized):
+        selected.append("web_search")
+
+    if re.search(r"\b(diagramme|diagram|sch[eé]ma|organigramme|mermaid)\b", normalized):
+        selected.append("diagram_generator")
+
+    if re.search(r"\b(explique|expliquer|cours|self.attention|transformer|embedding|rag|qwen|matrices?\s+[qkv])\b", normalized):
+        selected.append("course_rag")
+
+    if selected:
+        ordered = [name for name in TOOL_ORDER if name in selected]
+        route = "multi_tool" if len(ordered) > 1 else ordered[0]
+        print("\n[PLANNER] Plan :", ordered)
+        return {
+            "selected_tools": ordered,
+            "remaining_tools": ordered.copy(),
+            "route": route,
+            "tool_results": {},
+            "sources": [],
+            "diagram_code": None,
         }
 
     llm = QwenLLM()

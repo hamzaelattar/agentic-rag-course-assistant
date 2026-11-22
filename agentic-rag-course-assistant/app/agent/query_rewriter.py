@@ -1,5 +1,7 @@
 
 import gc
+import re
+from difflib import SequenceMatcher
 import torch
 
 from app.agent.llm import QwenLLM
@@ -74,6 +76,38 @@ Question reformulée :
         return question
 
     rewritten = rewritten.splitlines()[0].strip().strip('"')
+
+    # Qwen peut recopier le libellé final du prompt au lieu de
+    # reformuler la question. Dans ce cas, garder la demande originale.
+    rewritten = re.sub(
+        r"^(?:la\s+)?(?:question|requête)\s+(?:reformulée|utilisée)\s*:\s*",
+        "",
+        rewritten,
+        flags=re.IGNORECASE,
+    ).strip()
+
+    if not rewritten or len(rewritten) < 4:
+        rewritten = question
+
+    # Ne pas reprendre une ancienne rÃ©ponse comme nouvelle question.
+    normalized_rewrite = re.sub(r"\W+", " ", rewritten.casefold()).strip()
+    for message in (history or [])[-6:]:
+        if message.get("role") != "assistant":
+            continue
+
+        old_answer = re.sub(
+            r"\W+", " ", message.get("content", "").casefold()
+        ).strip()
+        if not old_answer:
+            continue
+
+        old_prefix = old_answer[:max(len(normalized_rewrite) * 2, 160)]
+        if (
+            normalized_rewrite in old_answer
+            or SequenceMatcher(None, normalized_rewrite, old_prefix).ratio() >= 0.72
+        ):
+            rewritten = question
+            break
 
     print("[REWRITER] Original :", question)
     print("[REWRITER] Nouvelle :", rewritten)

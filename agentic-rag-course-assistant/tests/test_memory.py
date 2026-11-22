@@ -1,14 +1,14 @@
 
 import sys
 
-from app.agent.memory import (
-    open_conversation_agent,
-    ask_agent,
-    get_conversation_history
-)
-
-
 def main():
+    print("Démarrage de l’agent avec mémoire...", flush=True)
+
+    from app.agent.memory import (
+        open_conversation_agent,
+        ask_agent,
+        get_conversation_history
+    )
 
     thread_id = (
         sys.argv[1]
