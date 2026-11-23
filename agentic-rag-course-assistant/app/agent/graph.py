@@ -191,6 +191,16 @@ def planner_node(state: AgentState) -> dict:
     normalized = question.casefold()
     selected = []
 
+    if re.fullmatch(r"\s*(bonjour|bonsoir|salut|hello|coucou|merci)[!?.\s]*", normalized):
+        return {
+            "selected_tools": ["direct"],
+            "remaining_tools": [],
+            "route": "direct",
+            "tool_results": {},
+            "sources": [],
+            "diagram_code": None,
+        }
+
     if re.search(r"\b(page\s*\d+|p\.\s*\d+|consulte la page|lis la page)\b", normalized):
         selected.append("document_lookup")
 
@@ -778,7 +788,10 @@ def save_history_node(state: AgentState) -> dict:
 
     history.append({
         "role": "assistant",
-        "content": state.get("answer", "")
+        "content": state.get("answer", ""),
+        "sources": state.get("sources", []),
+        "diagram_code": state.get("diagram_code"),
+        "selected_tools": state.get("selected_tools", [])
     })
 
     print(

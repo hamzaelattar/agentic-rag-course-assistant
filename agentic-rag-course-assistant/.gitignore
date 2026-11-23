@@ -5,3 +5,7 @@ __pycache__/
 data/qdrant/
 neo4j_data/
 .cache/
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
+.pytest_cache/

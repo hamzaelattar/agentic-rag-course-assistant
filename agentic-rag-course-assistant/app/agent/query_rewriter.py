@@ -86,7 +86,11 @@ Question reformulée :
         flags=re.IGNORECASE,
     ).strip()
 
-    if not rewritten or len(rewritten) < 4:
+    if (
+        not rewritten
+        or len(rewritten) < 4
+        or rewritten.casefold().strip(" .:!") in {"aucun", "aucune", "none", "n/a"}
+    ):
         rewritten = question
 
     # Ne pas reprendre une ancienne rÃ©ponse comme nouvelle question.
